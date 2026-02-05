@@ -73,7 +73,7 @@ XERO_CLIENT_ID=your_xero_client_id
 XERO_CLIENT_SECRET=your_xero_client_secret
 XERO_REDIRECT_URI=https://your-site-name.netlify.app/.netlify/functions/xero-callback
 XERO_SCOPE=openid profile email accounting.transactions accounting.contacts accounting.settings offline_access
-GROQ_API_KEY=your_groq_api_key
+GLM_API_KEY=your_glm_api_key
 ```
 
 **IMPORTANT:** Replace `your-site-name` with your actual Netlify site name!

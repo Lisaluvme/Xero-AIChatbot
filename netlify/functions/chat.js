@@ -1,143 +1,260 @@
 const axios = require('axios');
 
-// Helper function to call Groq API
-async function callGroqAPI(message, conversationHistory = []) {
+/**
+ * System prompt for GLM-4-Flash
+ */
+const SYSTEM_PROMPT = `You are an AI accounting admin assistant with full Xero API integration. You can perform complete CRUD operations:
+
+## Capabilities
+
+### 1. GET (Retrieve Data)
+- "Show me all invoices" / "List invoices" / "Get pending invoices"
+- "Find customer ABC" / "Show contact details"
+- "Display chart of accounts" / "List all accounts"
+- "Show products" / "List items in inventory"
+- "View payments" / "Get payment history"
+
+### 2. POST (Create Data)
+- "Create invoice for [customer]" / "New invoice"
+- "Add contact [name]" / "Create customer"
+- "Create account [code]" / "New account"
+- "Add product [name]" / "New item"
+- "Record payment" / "Add payment"
+
+### 3. PUT (Update Data)
+- "Update invoice [ID]" / "Modify invoice"
+- "Edit contact [name]" / "Update customer"
+- "Change account [details]"
+- "Update product [name]" / "Modify item"
+
+### 4. DELETE (Remove Data)
+- "Delete invoice [ID]" / "Remove invoice"
+- "Delete contact [name]" / "Remove customer"
+- "Delete account [code]"
+- "Delete product [name]" / "Remove item"
+
+### 5. POS Operations
+- "Process sale" / "Record payment for invoice"
+- "Apply payment to invoice"
+- "Handle refund"
+
+## Response Format
+
+For actions requiring API calls, output ONLY a valid JSON object (no markdown, no code blocks):
+
+**POST (Create Invoice):**
+{
+  "action": "create_invoice",
+  "customer_name": "Customer Name",
+  "date": "2026-02-05",
+  "due_date": "2026-02-12",
+  "line_items": [
+    { "description": "Product A", "quantity": 2, "unit_amount": 100, "tax_type": "NONE", "account_code": "200" }
+  ],
+  "reference": "INV-001",
+  "type": "ACCREC",
+  "status": "DRAFT"
+}
+
+**POST (Create Contact):**
+{
+  "action": "create_contact",
+  "name": "ABC Company",
+  "email": "abc@company.com",
+  "phone": "0123456789"
+}
+
+**GET (List Invoices):**
+{
+  "action": "get_invoices",
+  "filters": { "status": "DRAFT" }
+}
+
+**PUT (Update Invoice):**
+{
+  "action": "update_invoice",
+  "invoice_id": "invoice-uuid",
+  "invoice_data": {
+    "status": "AUTHORISED",
+    "reference": "UPDATED-REF"
+  }
+}
+
+**DELETE (Remove Invoice):**
+{
+  "action": "delete_invoice",
+  "invoice_id": "invoice-uuid"
+}
+
+## Guidelines
+- Be concise, professional but friendly
+- Ask for missing required information
+- Format currency as "RM X,XXX.XX"
+- Format dates as "YYYY-MM-DD"
+- Default tax_type: "NONE" (Malaysia)
+- Default account_code: "200" (Sales)
+- Do NOT wrap JSON in code blocks
+- For general questions, respond normally with text
+`;
+
+/**
+ * Chat with GLM-4-Flash API
+ */
+async function chatWithGLM(userMessage, conversationHistory = []) {
   try {
-    const apiKey = process.env.GROQ_API_KEY;
-    
+    const apiKey = process.env.GLM_API_KEY;
+
     if (!apiKey) {
-      throw new Error('GROQ_API_KEY not found in environment variables');
+      throw new Error('GLM_API_KEY not found in environment variables');
     }
 
+    // Build messages array
     const messages = [
       {
         role: 'system',
-        content: `You are an intelligent Xero accounting assistant. You can:
-
-1. Answer accounting questions conversationally
-2. Create invoices, quotations, and other Xero documents
-3. Retrieve, update, and delete Xero data (contacts, invoices, accounts, etc.)
-4. Perform calculations and provide accounting advice
-
-RESPONSE FORMAT:
-- For questions: Respond in plain text, be helpful and conversational
-- For creating documents: Output ONLY valid JSON (no markdown, no code blocks)
-- For data retrieval: Output JSON with the requested data structure
-
-WHEN TO OUTPUT JSON:
-Only output JSON when the user explicitly asks to:
-- Create invoice/quotation
-- Add contact/customer
-- Update existing record
-- Delete record
-- Retrieve specific data
-
-CONVERSATION EXAMPLES:
-User: "hi"
-AI: "Hello! I'm your Xero accounting assistant. How can I help you today?"
-
-User: "What's the difference between a quote and an invoice?"
-AI: "A quote (or quotation) is a document you send to a customer before providing goods or services - it's an offer that can be accepted or rejected. An invoice is a request for payment sent after the goods or services have been provided. Quotes can be converted to invoices once accepted."
-
-Remember: Be conversational and helpful unless the user explicitly requests a Xero operation.`
+        content: SYSTEM_PROMPT
       },
       ...conversationHistory,
       {
         role: 'user',
-        content: message
+        content: userMessage
       }
     ];
 
+    // Make API request to GLM-4-Flash
     const response = await axios.post(
-      'https://api.groq.com/openai/v1/chat/completions',
+      'https://open.bigmodel.cn/api/paas/v4/chat/completions',
       {
+        model: 'glm-4-flash',
         messages: messages,
-        model: 'llama-3.3-70b-versatile',
         temperature: 0.7,
-        max_tokens: 2000
+        max_tokens: 2000,
+        top_p: 0.9
       },
       {
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         }
       }
     );
 
-    const aiMessage = response.data.choices[0].message.content;
-    
-    // Check if response is JSON
-    let isJSON = false;
+    // Extract AI response
+    const aiContent = response.data.choices[0].message.content;
+    const usage = response.data.usage || {};
+
+    // Try to parse as JSON
     let parsedJSON = null;
+    let isJSON = false;
+
     try {
-      if (aiMessage.trim().startsWith('{')) {
-        parsedJSON = JSON.parse(aiMessage);
-        isJSON = true;
-      }
+      // Clean the content - remove markdown code blocks
+      const cleanedContent = aiContent
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+
+      parsedJSON = JSON.parse(cleanedContent);
+      isJSON = true;
     } catch (e) {
-      // Not JSON
+      isJSON = false;
     }
 
     return {
       success: true,
-      content: aiMessage,
+      content: aiContent,
+      parsedJSON: parsedJSON,
       isJSON: isJSON,
-      parsedJSON: parsedJSON
+      usage: usage
     };
+
   } catch (error) {
-    console.error('Groq API error:', error.response?.data || error.message);
+    console.error('GLM API Error:', error.response?.data || error.message);
+
     return {
       success: false,
       error: error.response?.data?.error?.message || error.message,
-      content: 'I apologize, but I\'m having trouble connecting to my AI service. Please try again.'
+      content: 'Sorry, I encountered an error processing your request. Please try again.'
     };
   }
 }
 
+/**
+ * Netlify Function: Handle chat requests
+ */
 exports.handler = async (event, context) => {
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
 
   try {
-    const { message, conversationHistory } = JSON.parse(event.body);
+    const { message, conversationHistory = [] } = JSON.parse(event.body);
 
     if (!message) {
       return {
         statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
         body: JSON.stringify({ error: 'Message is required' })
       };
     }
 
-    // Get AI response
-    const aiResponse = await callGroqAPI(message, conversationHistory || []);
+    // Call GLM API
+    const result = await chatWithGLM(message, conversationHistory);
 
-    // Update conversation history
-    const newHistory = [
-      ...(conversationHistory || []),
-      { role: 'user', content: message },
-      { role: 'assistant', content: aiResponse.content }
-    ].slice(-20); // Keep last 20 messages
+    if (!result.success) {
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: result.error,
+          message: result.content
+        })
+      };
+    }
 
+    // Return AI response
     return {
       statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({
-        success: aiResponse.success,
-        message: aiResponse.content,
-        conversationHistory: newHistory,
-        isJSON: aiResponse.isJSON,
-        parsedJSON: aiResponse.parsedJSON
+        success: true,
+        message: result.content,
+        isJSON: result.isJSON,
+        parsedJSON: result.parsedJSON,
+        conversationHistory: [
+          ...conversationHistory,
+          { role: 'user', content: message },
+          { role: 'assistant', content: result.content }
+        ]
       })
     };
 
   } catch (error) {
-    console.error('Chat error:', error);
+    console.error('Chat function error:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({
         success: false,
         error: error.message
