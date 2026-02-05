@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xero AI Chatbot</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <div class="logo">
+          <span class="logo-icon">🤖</span>
+          <h1>Xero AI Chatbot</h1>
+        </div>
+        <div class="status-indicator">
+          <span class="status-dot" id="status-dot"></span>
+          <span class="status-text" id="status-text">Connecting...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Window -->
+    <div class="chat-window">
+      <div class="chat-messages" id="chat-messages">
+        <!-- Welcome Message -->
+        <div class="message bot-message">
+          <div class="message-avatar">🤖</div>
+          <div class="message-content">
+            <p>👋 Hello! I'm your AI accounting assistant.</p>
+            <p>I can help you with:</p>
+            <ul>
+              <li>Creating invoices and quotations in Xero</li>
+              <li>Answering accounting questions</li>
+              <li>Performing calculations (totals, taxes, discounts)</li>
+            </ul>
+            <p>What would you like to do today?</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Xero Connection Banner -->
+    <div class="xero-banner" id="xero-banner" style="display: none;">
+      <div class="banner-content">
+        <span class="banner-icon">🔗</span>
+        <span class="banner-text">Connect your Xero account to create invoices and quotations</span>
+        <button class="btn-connect" id="btn-connect">Connect Xero</button>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <form id="chat-form" class="chat-form">
+        <input
+          type="text"
+          id="user-input"
+          class="chat-input"
+          placeholder="Type your message here..."
+          autocomplete="off"
+        >
+        <button type="submit" class="btn-send" id="btn-send">
+          <span class="send-icon">Send</span>
+        </button>
+      </form>
+      <div class="quick-actions">
+        <button class="quick-action" data-message="Create an invoice for ABC Company, 2 items: Web Design RM2000, Hosting RM500">
+          📄 Create Invoice
+        </button>
+        <button class="quick-action" data-message="Calculate total for 10 items at RM50 each with 10% discount">
+          🧮 Calculate
+        </button>
+        <button class="quick-action" data-message="What's the difference between a quote and an invoice?">
+          ❓ Ask Question
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- Invoice Created Modal -->
+  <div class="modal" id="invoice-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>✅ Invoice Created Successfully!</h2>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Invoice details will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal" id="btn-view-invoice" target="_blank">View in Xero</button>
+        <button class="btn-modal btn-secondary" id="btn-close-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=27"></script>
+</body>
+</html>

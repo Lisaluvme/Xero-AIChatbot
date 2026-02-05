@@ -1,0 +1,20 @@
+{
+  "name": "xero-chatbot-frontend",
+  "version": "1.0.0",
+  "description": "Xero Chatbot Frontend - Netlify Deployment",
+  "scripts": {
+    "dev": "npx http-server -p 8080 -C -o",
+    "build": "echo 'Static files - no build needed'",
+    "preview": "npx http-server -p 8080"
+  },
+  "keywords": [
+    "xero",
+    "chatbot",
+    "frontend"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
