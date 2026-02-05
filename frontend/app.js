@@ -13,12 +13,9 @@
 // CONFIGURATION
 // ==========================================
 
-// Backend API URL - Auto-detect environment
-// For local development: https://localhost:3000
-// For Netlify: /api (uses Netlify Functions)
-const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'https://localhost:3000'  // Local development
-  : '/api';  // Netlify Functions
+// Backend API URL
+// Frontend deployed on Netlify, backend running locally
+const API_BASE_URL = 'https://localhost:3000';  // Always use local backend
 
 // Session ID for maintaining conversation context
 // Use existing session from localStorage or create new one

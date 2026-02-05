@@ -23,7 +23,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+// Allow requests from Netlify frontend
+app.use(cors({
+  origin: [
+    'http://localhost:8080',
+    'https://xerochatbot.netlify.app',
+    'http://127.0.0.1:8080'
+  ],
+  credentials: true
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
