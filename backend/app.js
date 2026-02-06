@@ -1,12 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
+const cors = require('cors');
 
 const app = express();
 // Use PORT from environment (Render provides this) or default to 4000 for local
 const PORT = process.env.PORT || 4000;
 
 // Middleware
+app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
 
 // ==========================================
