@@ -94,8 +94,11 @@ app.get('/xero/auth', (req, res) => {
   console.log('   State:', state);
   console.log('   Full URL:', authUrl.toString());
 
-  // Redirect user to Xero
-  res.redirect(authUrl.toString());
+  // Return authorization URL to frontend (frontend will handle redirect)
+  res.json({
+    success: true,
+    authorization_url: authUrl.toString()
+  });
 });
 
 /**
