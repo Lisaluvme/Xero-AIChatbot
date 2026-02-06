@@ -132,17 +132,26 @@ app.get('/xero/callback', async (req, res) => {
     console.log('📋 Token exchange parameters:');
     console.log('   Token URL: https://identity.xero.com/oauth/token');
     console.log('   Redirect URI:', redirectUri);
+    console.log('   Redirect URI length:', redirectUri.length);
+    console.log('   Redirect URI encoded:', encodeURIComponent(redirectUri));
     console.log('   Client ID:', clientId);
+    console.log('   Code received:', code ? 'YES' : 'NO');
+    console.log('   Code length:', code ? code.length : 0);
+
+    // Build the request body
+    const requestBody = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: redirectUri,
+      client_id: clientId,
+      client_secret: clientSecret
+    });
+
+    console.log('📋 Request body:', requestBody.toString());
 
     const tokenResponse = await axios.post(
       'https://identity.xero.com/oauth/token',
-      new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: redirectUri,
-        client_id: clientId,
-        client_secret: clientSecret
-      }),
+      requestBody,
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
