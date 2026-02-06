@@ -14,8 +14,8 @@
 // ==========================================
 
 // Backend API URL
-// Frontend deployed on Netlify, backend running locally
-const API_BASE_URL = 'https://localhost:3000';  // Always use local backend
+// Frontend deployed on Netlify, backend deployed on Render
+const API_BASE_URL = 'https://xero-aichatbot.onrender.com';  // Render backend
 
 // Session ID for maintaining conversation context
 // Use existing session from localStorage or create new one
