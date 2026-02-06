@@ -1,290 +1,101 @@
-# 🤖 Xero Chatbot Backend
+# Xero OAuth Backend - Render Deployment
 
-Production-ready Node.js/Express backend integrated with **GLM-4-Flash AI** and **Xero API**.
-
----
-
-## Features
-
-- ✅ **GLM-4-Flash Integration** - AI-powered chat responses
-- ✅ **Xero OAuth 2.0** - Secure authentication with token refresh
-- ✅ **Invoice Creation** - Create invoices and quotations in Xero
-- ✅ **RESTful API** - Clean endpoints for frontend communication
-- ✅ **Session Management** - Conversation context tracking
-- ✅ **Error Handling** - Comprehensive error responses
-
----
-
-## Tech Stack
-
-- **Node.js** - Runtime environment
-- **Express** - Web framework
-- **Axios** - HTTP client for API calls
-- **GLM-4-Flash** - Zhipu AI model
-- **Xero API** - Accounting integration
-
----
-
-## API Endpoints
-
-### Health & Status
-
-```
-GET /health
-GET /
-```
-
-### Xero Authentication
-
-```
-GET  /login              - Initiate OAuth flow
-GET  /callback           - OAuth callback handler
-GET  /status             - Check connection status
-POST /disconnect         - Disconnect account
-```
-
-### Chat & Documents
-
-```
-POST /chat              - Main chat endpoint
-POST /create-invoice    - Direct invoice creation
-```
-
----
-
-## Installation
-
-### 1. Install Dependencies
-
-```bash
-npm install
-```
-
-### 2. Configure Environment
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
-
-```bash
-GLM_API_KEY=your_glm_api_key
-XERO_CLIENT_ID=your_xero_client_id
-XERO_CLIENT_SECRET=your_xero_client_secret
-XERO_REDIRECT_URI=http://localhost:3000/callback
-XERO_SCOPE=accounting.transactions accounting.contacts accounting.settings offline_access
-PORT=3000
-FRONTEND_URL=http://localhost:3000
-```
-
-### 3. Start Server
-
-```bash
-# Development
-npm run dev
-
-# Production
-npm start
-```
-
-Server runs on: `http://localhost:3000`
-
----
+Minimal Express.js backend for Xero OAuth 2.0 authentication, ready to deploy on Render.
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GLM_API_KEY` | ✅ | Zhipu AI API key |
-| `XERO_CLIENT_ID` | ✅ | Xero OAuth client ID |
-| `XERO_CLIENT_SECRET` | ✅ | Xero OAuth secret |
-| `XERO_REDIRECT_URI` | ✅ | OAuth callback URL |
-| `XERO_SCOPE` | ✅ | API permissions |
-| `PORT` | ❌ | Server port (default: 3000) |
-| `FRONTEND_URL` | ✅ | CORS allowed origin |
-| `NODE_ENV` | ❌ | Environment mode |
+Set these in your Render Dashboard:
 
----
+- `XERO_CLIENT_ID` - Your Xero app client ID
+- `XERO_CLIENT_SECRET` - Your Xero app client secret
+- `XERO_REDIRECT_URI` - Your Render backend URL + `/xero/callback`
+  - Example: `https://your-app.onrender.com/xero/callback`
+- `XERO_SCOPE` - OAuth scopes (default: `offline_access accounting.transactions accounting.contacts`)
 
-## API Documentation
+## Deploy to Render
 
-### POST /chat
+### Option 1: Connect GitHub Repository
 
-Main chat endpoint. Processes user messages and returns AI responses.
-
-**Request**:
-```json
-{
-  "message": "Create an invoice for ABC Company, Web Design RM2000",
-  "session_id": "user_123"
-}
-```
-
-**Response (Text)**:
-```json
-{
-  "success": true,
-  "type": "text",
-  "message": "AI response here...",
-  "xero_connected": true
-}
-```
-
-**Response (Invoice Created)**:
-```json
-{
-  "success": true,
-  "type": "invoice_created",
-  "message": "Invoice created successfully!",
-  "xero_invoice": { ... },
-  "invoice_url": "https://go.xero.com/..."
-}
-```
-
----
-
-### GET /login
-
-Initiate Xero OAuth flow.
-
-**Request**:
-```
-GET /login?session_id=user_123
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "authorization_url": "https://login.xero.com/identity/connect/authorize?..."
-}
-```
-
----
-
-### GET /status
-
-Check Xero connection status.
-
-**Request**:
-```
-GET /status?session_id=user_123
-```
-
-**Response**:
-```json
-{
-  "connected": true,
-  "tenantName": "My Organization",
-  "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-}
-```
-
----
-
-## File Structure
-
-```
-backend/
-├── server.js          # Main Express server
-├── glmClient.js       # GLM-4-Flash API client
-├── xeroClient.js      # Xero API client (OAuth, invoices)
-├── package.json
-├── .env.example
-└── README.md
-```
-
----
-
-## Deployment to Render
-
-### Option 1: Render Dashboard
-
-1. Go to https://dashboard.render.com/
-2. **New +** → **Web Service**
-3. Connect GitHub repository
-4. Configure:
+1. **Push** your code to GitHub
+2. **Create** a new Web Service in Render Dashboard
+3. **Configure**:
    - **Root Directory**: `backend`
    - **Build Command**: `npm install`
-   - **Start Command**: `node server.js`
-5. Add environment variables
-6. Deploy
+   - **Start Command**: `npm start`
+4. **Add Environment Variables** (see above)
+5. **Deploy** - Click "Create Web Service"
 
-### Option 2: Render CLI
+### Option 2: Deploy from CLI
 
 ```bash
-npm install -g render-cli
-render login
-render deploy --src ./backend
+# Install Render CLI
+npm install -g renderctl
+
+# Deploy
+renderctl deploy
 ```
 
----
+## Important Setup Steps
 
-## Development
+### 1. Xero Developer Portal Configuration
 
-### Running Locally
+After you get your Render URL (e.g., `https://xero-backend-abc.onrender.com`):
+
+1. Go to: https://developer.xero.com/app/manage
+2. Find your app
+3. In **Redirect URI**, add:
+   ```
+   https://your-app.onrender.com/xero/callback
+   ```
+4. In **Company URL**, enter:
+   ```
+   https://your-app.onrender.com
+   ```
+5. Click **Save**
+
+### 2. Update Environment Variables in Render
+
+Make sure your `XERO_REDIRECT_URI` matches EXACTLY what you set in Xero Developer Portal.
+
+## Endpoints
+
+Once deployed, your backend will have these endpoints:
+
+- `GET /health` - Health check
+- `GET /xero/auth` - Start OAuth flow
+- `GET /xero/callback` - OAuth callback (from Xero)
+- `GET /xero/status` - Check connection status
+
+## Testing Locally
+
+Before deploying, test locally:
 
 ```bash
-# Install dependencies
+cd backend
 npm install
-
-# Start development server
-npm run dev
+npm start
 ```
 
-### Testing
+Visit: http://localhost:4000/health
 
-```bash
-# Health check
-curl http://localhost:3000/health
+## Notes
 
-# Chat endpoint
-curl -X POST http://localhost:3000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello!", "session_id": "test"}'
-```
-
----
+- Render automatically assigns a PORT - the app handles this with `process.env.PORT`
+- The redirect URI in Xero Developer Portal must match EXACTLY
+- This backend uses in-memory storage (tokens are lost on restart)
+- For production, consider adding a database for token persistence
 
 ## Troubleshooting
 
-### "Xero Not Connected"
+### Deployment fails
 
-- Ensure OAuth flow completed
-- Check `XERO_REDIRECT_URI` matches Xero app settings
-- Verify `XERO_CLIENT_ID` and `XERO_CLIENT_SECRET`
+- Check that all environment variables are set in Render Dashboard
+- Verify the build command: `npm install`
+- Verify the start command: `npm start`
 
-### "GLM API Error"
+### OAuth callback fails
 
-- Check `GLM_API_KEY` is valid
-- Verify API key has credits
-- Check network connectivity
-
-### CORS Errors
-
-- Ensure `FRONTEND_URL` is set correctly
-- No trailing slash in URL
-- Exact match required
-
----
-
-## Security Notes
-
-- Never commit `.env` file
-- Use `process.env` for sensitive data
-- Enable HTTPS in production
-- Implement rate limiting for production
-- Use proper session storage (Redis/database)
-
----
-
-## Support
-
-- **Xero API Docs**: https://developer.xero.com/documentation/
-- **GLM-4-Flash Docs**: https://open.bigmodel.cn/dev/api
-- **Express Docs**: https://expressjs.com/
-
----
-
-**License**: ISC
+- Make sure the redirect URI matches EXACTLY in both:
+  1. Render environment variables
+  2. Xero Developer Portal
+- Use `https://` for production deployments

@@ -1,33 +1,14 @@
 {
-  "name": "xero-chatbot-backend",
+  "name": "xero-oauth-minimal",
   "version": "1.0.0",
-  "description": "Production-ready AI Accounting Chatbot Backend - GLM-4-Flash + Xero API",
-  "main": "server.js",
+  "description": "Minimal Xero OAuth 2.0 backend",
+  "main": "app.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node app.js"
   },
-  "keywords": [
-    "xero",
-    "chatbot",
-    "accounting",
-    "glm-4",
-    "ai",
-    "oauth2"
-  ],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "axios": "^1.6.0",
-    "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "groq-sdk": "^0.37.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "engines": {
-    "node": ">=14.0.0"
+    "express": "^4.18.2"
   }
 }
