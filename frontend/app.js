@@ -14,8 +14,23 @@
 // ==========================================
 
 // Backend API URL
-// Frontend deployed on Netlify, backend deployed on Render
-const API_BASE_URL = 'https://xero-aichatbot.onrender.com';  // Render backend
+// Automatically detects environment:
+// - Local development: https://localhost:3000
+// - Production: Use Netlify environment variable or default
+const getApiBaseUrl = () => {
+  // Check if Netlify injected the API URL
+  if (window.NETLIFY_API_URL) {
+    return window.NETLIFY_API_URL;
+  }
+  // Check for environment variable in script tag
+  if (typeof ENV_API_BASE_URL !== 'undefined') {
+    return ENV_API_BASE_URL;
+  }
+  // Default to localhost for development
+  return 'https://localhost:3000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Session ID for maintaining conversation context
 // Use existing session from localStorage or create new one

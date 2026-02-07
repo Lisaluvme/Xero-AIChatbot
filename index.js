@@ -27,8 +27,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
   origin: [
     'http://localhost:8080',
+    'http://localhost:8081',
     'https://xerochatbot.netlify.app',
-    'http://127.0.0.1:8080'
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:8081'
   ],
   credentials: true
 }));
@@ -90,21 +92,52 @@ async function ensureValidToken(sessionId) {
     return { success: false, error: 'Not connected to Xero' };
   }
 
-  if (!session.refreshToken) {
-    return { success: false, error: 'No refresh token available' };
-  }
-
   // Check if token needs refresh
   if (!needsRefresh(session.expiresAt)) {
     console.log('✅ Token is still valid, expires at:', new Date(session.expiresAt).toISOString());
     return { success: true, session };
   }
 
-  console.log('🔄 Refreshing access token...');
+  console.log('🔄 Token needs refresh...');
   console.log('📊 Token expired at:', new Date(session.expiresAt).toISOString());
   console.log('📊 Current time:', new Date().toISOString());
 
   try {
+    // Handle M2M token refresh
+    if (session.authType === 'm2m') {
+      console.log('🔄 Using M2M token refresh...');
+      const m2mResult = await xeroClient.getM2MToken();
+
+      if (!m2mResult.success) {
+        console.error('❌ M2M token refresh failed:', m2mResult.error);
+        return { success: false, error: 'M2M token refresh failed', details: m2mResult.error };
+      }
+
+      // Get tenants for the new token
+      const tenantsResult = await xeroClient.getTenants(m2mResult.tokens.accessToken);
+      if (!tenantsResult.success || tenantsResult.tenants.length === 0) {
+        return { success: false, error: 'Failed to get tenants after M2M refresh' };
+      }
+
+      console.log('✅ M2M token refreshed successfully');
+      console.log('📊 New token expires at:', new Date(m2mResult.tokens.expiresAt).toISOString());
+
+      setSession(sessionId, {
+        accessToken: m2mResult.tokens.accessToken,
+        tenantId: tenantsResult.tenants[0].tenantId,
+        tenantName: tenantsResult.tenants[0].tenantName,
+        expiresAt: m2mResult.tokens.expiresAt,
+        authType: 'm2m'
+      });
+
+      return { success: true, session: getSession(sessionId) };
+    }
+
+    // Handle OAuth token refresh (with refresh token)
+    if (!session.refreshToken) {
+      return { success: false, error: 'No refresh token available' };
+    }
+
     const refreshResult = await xeroClient.refreshAccessToken(session.refreshToken);
 
     if (!refreshResult.success) {
@@ -388,6 +421,46 @@ app.post('/chat', async (req, res) => {
         conversationHistory: [],
         connected: false
       };
+
+      // Auto-connect with M2M if configured
+      if (process.env.XERO_AUTH_TYPE === 'm2m') {
+        console.log('🔑 M2M authentication configured - auto-connecting...');
+        try {
+          const m2mResult = await xeroClient.getM2MToken();
+          console.log('📊 M2M Result success:', m2mResult.success);
+          console.log('📊 M2M Result has tokens:', !!m2mResult.tokens);
+          if (m2mResult.tokens) {
+            console.log('📊 Access token exists:', !!m2mResult.tokens.accessToken);
+            console.log('📊 Access token (first 20 chars):', m2mResult.tokens.accessToken?.substring(0, 20) + '...');
+          }
+
+          if (m2mResult.success && m2mResult.tokens && m2mResult.tokens.accessToken) {
+            // Get tenants
+            const tenantsResult = await xeroClient.getTenants(m2mResult.tokens.accessToken);
+            if (tenantsResult.success && tenantsResult.tenants.length > 0) {
+              session.accessToken = m2mResult.tokens.accessToken;
+              session.tenantId = tenantsResult.tenants[0].tenantId;
+              session.tenantName = tenantsResult.tenants[0].tenantName;
+              session.expiresAt = m2mResult.tokens.expiresAt;
+              session.connected = true;
+              session.authType = 'm2m';
+              console.log('✅ M2M auto-connection successful!');
+              console.log('📊 Tenant:', session.tenantName);
+            } else {
+              console.error('❌ Failed to get tenants:', tenantsResult.error);
+            }
+          }
+        } catch (error) {
+          console.error('❌ M2M auto-connection failed:', error.message);
+        }
+      }
+
+      setSession(session_id, session);
+    }
+
+    // Ensure conversationHistory exists
+    if (!session.conversationHistory) {
+      session.conversationHistory = [];
       setSession(session_id, session);
     }
 

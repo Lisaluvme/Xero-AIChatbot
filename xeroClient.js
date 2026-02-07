@@ -2,13 +2,65 @@
  * Xero API Client
  *
  * This module handles all Xero API interactions including:
- * - OAuth2 authentication
+ * - OAuth2 authentication (User flow)
+ * - Machine-to-Machine (M2M) authentication
  * - Creating invoices and quotations
  * - Token refresh handling
  */
 
 const axios = require('axios');
 const crypto = require('crypto');
+
+/**
+ * M2M Authentication - Get access token directly using client credentials
+ *
+ * @returns {Promise<Object>} - Token response with access_token
+ */
+async function getM2MToken() {
+  try {
+    console.log('🔑 Getting M2M access token...');
+
+    const response = await axios.post(
+      'https://identity.xero.com/oauth/token',
+      new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: process.env.XERO_CLIENT_ID,
+        client_secret: process.env.XERO_CLIENT_SECRET,
+        scope: process.env.XERO_SCOPE || 'accounting.transactions accounting.contacts accounting.settings'
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+
+    console.log('✅ M2M token received successfully');
+    console.log('📊 Response keys:', Object.keys(response.data));
+    console.log('📊 Full response:', JSON.stringify(response.data, null, 2));
+
+    // Calculate expiry time
+    const expiresIn = response.data.expires_in || 1800;
+    const expiresAt = Date.now() + (expiresIn * 1000);
+
+    return {
+      success: true,
+      tokens: {
+        accessToken: response.data.access_token,
+        expiresIn: expiresIn,
+        tokenType: response.data.token_type,
+        expiresAt: expiresAt
+      }
+    };
+
+  } catch (error) {
+    console.error('❌ M2M token error:', error.response?.data || error.message);
+    return {
+      success: false,
+      error: error.response?.data || error.message
+    };
+  }
+}
 
 /**
  * Generate Xero OAuth2 authorization URL
@@ -497,6 +549,7 @@ module.exports = {
   getAuthorizationUrl,
   exchangeCodeForToken,
   refreshAccessToken,
+  getM2MToken,  // M2M authentication
   getTenants,
   createInvoice,
   getOrCreateContact,

@@ -1,0 +1,25 @@
+# Render Deployment Configuration
+services:
+  - type: web
+    name: xero-chatbot-backend
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server-mcp.js
+    env: node
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: XERO_CLIENT_ID
+        sync: false
+      - key: XERO_CLIENT_SECRET
+        sync: false
+      - key: GLM_API_KEY
+        sync: false
+      - key: GLM_MODEL
+        value: glm-4.7-flash
+        sync: false

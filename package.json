@@ -4,8 +4,9 @@
   "description": "AI-powered accounting chatbot with Xero API integration",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node server-mcp.js",
+    "start:oauth": "node index.js",
+    "dev": "nodemon server-mcp.js",
     "netlify": "netlify dev",
     "deploy": "netlify deploy --prod",
     "deploy:preview": "netlify deploy"

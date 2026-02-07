@@ -2,6 +2,11 @@
   publish = "frontend"
   functions = "netlify/functions"
 
+[context.production.environment]
+  # IMPORTANT: Set your Render backend URL here when deploying
+  # Example: NETLIFY_API_URL = "https://xero-chatbot-api.onrender.com"
+  NETLIFY_API_URL = "https://localhost:3000"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
